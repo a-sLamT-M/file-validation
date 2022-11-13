@@ -1,35 +1,46 @@
-use std::collections::HashMap;
-use std::f32::consts::E;
 use std::fs;
-use std::path::{Path, PathBuf};
-use hex_literal::hex;
-use sha2::{Sha256, Sha512, Digest};
+use sha2::{ Sha512, Digest};
 
 pub struct FileHash {
-    hash: Vec<u8>,
-    file: Vec<u8>,
+    hash: String,
     path: String
 }
 
 impl FileHash {
     pub fn new(filepath: &str) -> std::io::Result<FileHash> {
-        let bytes: Vec<u8> = if let Ok(t) = fs::read(&filepath) {
-            t
-        } else {
-            Err(E)
-        };
+        let bytes: Vec<u8> = fs::read(&filepath)?;
         let mut hasher = Sha512::new();
         hasher.update(&bytes);
         let hashResult = hasher.finalize();
+        let hash_str = format!("{:X}", hashResult);
+
         let result = FileHash {
-            hash: hashResult.to_vec(),
-            file: bytes,
+            hash: hash_str,
             path: String::from(filepath)
         };
         Ok(result)
     }
 
-    pub fn get_hash_str(&self) -> std::io::Result<String> {
-        str::from_utf8(&self.hash)
+    pub fn load(hash: &str, path: &str) -> FileHash {
+        FileHash {
+            hash: String::from(hash),
+            path: String::from(path)
+        }
+    }
+
+    pub fn get_hash(&self) -> &str {
+        &self.hash
+    }
+
+    pub fn get_path(&self) -> &str {
+        &self.path
     }
 }
+
+impl PartialEq<Self> for FileHash {
+    fn eq(&self, other: &Self) -> bool {
+        &self.hash == &other.hash
+    }
+}
+
+impl Eq for FileHash {}

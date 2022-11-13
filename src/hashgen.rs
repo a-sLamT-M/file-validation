@@ -1,31 +1,26 @@
-use std::collections::HashMap;
-use std::fs::File;
-use std::hash::Hash;
 use std::io::{Error, ErrorKind};
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use walkdir::WalkDir;
-use crate::cli::Cli;
-use crate::command_handler::handler::CmdHandler;
-use crate::file::filehash::FileHash;
+use crate::file::file_hash::FileHash;
 
 pub struct HashGen {
     file_hash_vec: Vec<FileHash>,
-    folder_path: PathBuf
+    folder_path: String
 }
 
 impl HashGen {
     pub fn new() -> HashGen {
         HashGen {
             file_hash_vec: Vec::new(),
-            folder_path: std::env::current_dir().unwrap()
+            folder_path: String::from(std::env::current_dir().unwrap().into_os_string().into_string().unwrap())
         }
     }
 
-    pub fn set_path(&mut self, path: &PathBuf) -> Result<_, Error> {
-        if path.is_dir() {
-            Err(Error::from(ErrorKind::InvalidInput))
+    pub fn set_path(&mut self, path: &str) -> Result<(), Error> {
+        if Path::new(path).is_dir() {
+            return Err(Error::from(ErrorKind::InvalidInput));
         }
-        self.folder_path = path.clone();
+        self.folder_path = String::from(path);
         Ok(())
     }
 
@@ -33,17 +28,18 @@ impl HashGen {
         &self.file_hash_vec
     }
 
-    fn gen_file_hash_map(&mut self) -> Result<_, Error> {
-        if self.folder_path.is_dir() {
-            Err(Error::from(ErrorKind::InvalidInput))
+    pub fn gen_file_hash_map(&mut self) -> Result<(), Error> {
+        let p = Path::new(&self.folder_path);
+        if p.is_dir() {
+            return Err(Error::from(ErrorKind::InvalidInput));
         }
-        for file in WalkDir::new(&self.folder_path).into_iter() {
-            match file{
+        for file in WalkDir::new(p).into_iter() {
+            match file {
                 Ok(x) => {
-                    file_hash_vec.push(FileHash::new(x.path().to_str()?)
+                    self.file_hash_vec.push(FileHash::new(x.path().to_str().unwrap())
                         .expect("File path cannot convert to string."));
                 }
-                Err(_) => {}
+                Err(_e) => { continue; }
             }
         }
         Ok(())
