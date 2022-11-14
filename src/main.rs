@@ -10,7 +10,7 @@ fn main() {
             println!("{}", x);
         }
         Err(e) => {
-            println!("{}", e.to_string());
+            println!("{}", e);
         }
     }
 }

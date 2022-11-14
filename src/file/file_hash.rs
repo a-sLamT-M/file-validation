@@ -1,6 +1,5 @@
+use std::{fs, io};
 use sha2::{Digest, Sha512};
-use std::fs::{File, OpenOptions};
-use std::io::Read;
 use std::path::Path;
 
 pub struct FileHash {
@@ -11,13 +10,11 @@ pub struct FileHash {
 
 impl FileHash {
     pub fn new(filepath: &str, folder_path: &str) -> std::io::Result<FileHash> {
-        let mut f = OpenOptions::new().read(true).open(filepath).unwrap();
-        let mut bytes: Vec<u8> = Vec::new();
-        f.read_to_end(&mut bytes).unwrap();
+        let mut file = fs::File::open(filepath)?;
         let mut hasher = Sha512::new();
-        hasher.update(&bytes);
-        let hashResult = hasher.finalize();
-        let hash_str = format!("{:X}", hashResult);
+        let _ = io::copy(&mut file, &mut hasher)?;
+        let hash_result = hasher.finalize();
+        let hash_str = format!("{:X}", hash_result);
 
         let result = FileHash {
             hash: hash_str,
